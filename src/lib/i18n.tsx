@@ -37,6 +37,11 @@ const dict: Dict = {
   "cart.calc": { pt: "Calcular frete", en: "Calculate shipping" },
   "cart.checkout": { pt: "Finalizar pedido", en: "Place order" },
   "cart.remove": { pt: "Remover", en: "Remove" },
+  "cart.coupon": { pt: "Cupom", en: "Coupon" },
+  "cart.couponApply": { pt: "Aplicar", en: "Apply" },
+  "cart.couponApplied": { pt: "Cupom aplicado", en: "Coupon applied" },
+  "cart.couponInvalid": { pt: "Cupom inválido", en: "Invalid coupon" },
+  "cart.discount": { pt: "Desconto", en: "Discount" },
 
   "minime.title": { pt: "Mini-Me 3D", en: "3D Mini-Me" },
   "minime.subtitle": { pt: "Envie 3 a 5 fotos para gerar uma versão 3D de você.", en: "Upload 3–5 photos to generate a 3D version of yourself." },
