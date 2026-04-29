@@ -20,26 +20,26 @@ export default function ProductCard({ p }: { p: Product }) {
   const name = lang === "pt" ? p.name_pt : p.name_en;
   const desc = lang === "pt" ? p.description_pt : p.description_en;
   return (
-    <div className="group rounded-2xl overflow-hidden bg-card border border-border shadow-soft hover:shadow-elegant transition-smooth hover:-translate-y-1">
-      <div className="aspect-square overflow-hidden bg-muted">
+    <div className="group overflow-hidden bg-card border-2 border-border shadow-soft hover:shadow-elegant hover:border-primary transition-smooth hover:-translate-y-1">
+      <div className="aspect-square overflow-hidden bg-muted bg-grid">
         {p.image_url ? (
           <img src={p.image_url} alt={name} loading="lazy" className="w-full h-full object-cover transition-smooth group-hover:scale-105" />
         ) : null}
       </div>
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3 border-t-2 border-border">
         <div>
-          <h3 className="font-display font-semibold leading-tight">{name}</h3>
+          <h3 className="font-display font-bold leading-tight uppercase tracking-tight">{name}</h3>
           {desc && <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{desc}</p>}
         </div>
         <div className="flex items-center justify-between">
-          <span className="font-display font-bold text-lg">R$ {Number(p.price).toFixed(2)}</span>
+          <span className="font-mono-tech font-bold text-lg text-primary">R$ {Number(p.price).toFixed(2)}</span>
           <Button
             size="sm"
             onClick={() => {
               add({ id: p.id, name, price: Number(p.price), image_url: p.image_url, kind: "product" });
               toast.success(name);
             }}
-            className="bg-primary text-primary-foreground hover:opacity-90"
+            className="bg-primary text-primary-foreground hover:opacity-90 rounded-none"
           >
             <ShoppingBag className="w-4 h-4 mr-1" /> {t("shop.add")}
           </Button>

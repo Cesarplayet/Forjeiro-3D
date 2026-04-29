@@ -8,45 +8,46 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Brand: warm peach + deep ink */
-    --background: 36 100% 98%;
-    --foreground: 230 35% 12%;
+    /* FORJEIRO 3D — geometric forge: steel gray + electric blue */
+    --background: 220 20% 96%;
+    --foreground: 220 40% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 230 35% 12%;
+    --card-foreground: 220 40% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 230 35% 12%;
+    --popover-foreground: 220 40% 12%;
 
-    --primary: 18 92% 58%;
-    --primary-foreground: 36 100% 98%;
-    --primary-glow: 30 100% 70%;
+    --primary: 218 90% 48%;
+    --primary-foreground: 220 30% 98%;
+    --primary-glow: 200 100% 60%;
 
-    --secondary: 230 35% 12%;
-    --secondary-foreground: 36 100% 98%;
+    --secondary: 220 25% 22%;
+    --secondary-foreground: 220 20% 96%;
 
-    --muted: 30 30% 94%;
-    --muted-foreground: 230 15% 40%;
+    --muted: 220 15% 92%;
+    --muted-foreground: 220 15% 40%;
 
-    --accent: 165 60% 55%;
-    --accent-foreground: 230 35% 12%;
+    --accent: 200 100% 55%;
+    --accent-foreground: 220 40% 12%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 25% 88%;
-    --input: 30 25% 88%;
-    --ring: 18 92% 58%;
+    --border: 220 15% 85%;
+    --input: 220 15% 85%;
+    --ring: 218 90% 48%;
 
-    --radius: 1rem;
+    --radius: 0.25rem;
 
-    --gradient-hero: linear-gradient(135deg, hsl(30 100% 92%) 0%, hsl(18 92% 88%) 50%, hsl(165 60% 88%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(220 30% 14%) 0%, hsl(218 60% 22%) 50%, hsl(200 90% 35%) 100%);
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 100%);
-    --gradient-dark: linear-gradient(135deg, hsl(230 35% 12%) 0%, hsl(230 40% 20%) 100%);
+    --gradient-dark: linear-gradient(135deg, hsl(220 35% 10%) 0%, hsl(220 40% 18%) 100%);
+    --gradient-steel: linear-gradient(135deg, hsl(220 12% 75%) 0%, hsl(220 15% 55%) 100%);
 
-    --shadow-soft: 0 4px 20px -8px hsl(230 35% 12% / 0.12);
-    --shadow-elegant: 0 20px 50px -20px hsl(18 92% 58% / 0.35);
-    --shadow-glow: 0 0 40px hsl(30 100% 70% / 0.4);
+    --shadow-soft: 0 4px 20px -8px hsl(220 40% 12% / 0.15);
+    --shadow-elegant: 0 20px 50px -20px hsl(218 90% 48% / 0.4);
+    --shadow-glow: 0 0 40px hsl(200 100% 60% / 0.45);
 
     --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -68,33 +69,33 @@ All colors MUST be HSL.
   }
 
   .dark {
-    --background: 230 35% 8%;
-    --foreground: 36 100% 96%;
+    --background: 220 35% 8%;
+    --foreground: 220 20% 96%;
 
-    --card: 230 35% 12%;
-    --card-foreground: 36 100% 96%;
+    --card: 220 30% 12%;
+    --card-foreground: 220 20% 96%;
 
-    --popover: 230 35% 12%;
-    --popover-foreground: 36 100% 96%;
+    --popover: 220 30% 12%;
+    --popover-foreground: 220 20% 96%;
 
-    --primary: 18 92% 62%;
-    --primary-foreground: 230 35% 8%;
+    --primary: 200 100% 60%;
+    --primary-foreground: 220 35% 8%;
 
-    --secondary: 230 30% 18%;
-    --secondary-foreground: 36 100% 96%;
+    --secondary: 220 25% 18%;
+    --secondary-foreground: 220 20% 96%;
 
-    --muted: 230 30% 18%;
-    --muted-foreground: 230 15% 65%;
+    --muted: 220 25% 18%;
+    --muted-foreground: 220 15% 65%;
 
-    --accent: 165 60% 55%;
-    --accent-foreground: 230 35% 8%;
+    --accent: 218 90% 60%;
+    --accent-foreground: 220 35% 8%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 40%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 230 30% 22%;
-    --input: 230 30% 22%;
-    --ring: 18 92% 62%;
+    --border: 220 25% 22%;
+    --input: 220 25% 22%;
+    --ring: 200 100% 60%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -118,7 +119,13 @@ All colors MUST be HSL.
 
   h1, h2, h3, h4, .font-display {
     font-family: 'Space Grotesk', 'Inter', sans-serif;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
+    text-transform: none;
+  }
+
+  .font-mono-tech {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.02em;
   }
 }
 
@@ -126,8 +133,18 @@ All colors MUST be HSL.
   .bg-gradient-hero { background: var(--gradient-hero); }
   .bg-gradient-primary { background: var(--gradient-primary); }
   .bg-gradient-dark { background: var(--gradient-dark); }
+  .bg-gradient-steel { background: var(--gradient-steel); }
   .shadow-soft { box-shadow: var(--shadow-soft); }
   .shadow-elegant { box-shadow: var(--shadow-elegant); }
   .shadow-glow { box-shadow: var(--shadow-glow); }
   .transition-smooth { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.06) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .clip-hex {
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  }
 }

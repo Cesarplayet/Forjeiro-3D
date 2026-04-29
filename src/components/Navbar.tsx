@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Box, ShoppingBag, User, LogOut, Languages } from "lucide-react";
+import { Hexagon, ShoppingBag, User, LogOut, Languages } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/auth";
 import { useCart } from "@/lib/cart";
@@ -18,11 +18,11 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-40 backdrop-blur-md bg-background/80 border-b border-border">
       <div className="container flex items-center justify-between h-16 gap-4">
-        <Link to="/" className="flex items-center gap-2 font-display font-bold text-xl">
-          <span className="w-9 h-9 rounded-xl bg-gradient-primary grid place-items-center shadow-glow">
-            <Box className="w-5 h-5 text-primary-foreground" />
+        <Link to="/" className="flex items-center gap-2.5 font-display font-bold text-xl tracking-tight">
+          <span className="w-9 h-9 clip-hex bg-gradient-primary grid place-items-center shadow-glow">
+            <Hexagon className="w-4 h-4 text-primary-foreground" strokeWidth={2.5} />
           </span>
-          Print3D
+          <span>FORJEIRO <span className="font-mono-tech text-primary">3D</span></span>
         </Link>
 
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
