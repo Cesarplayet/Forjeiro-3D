@@ -147,4 +147,12 @@ All colors MUST be HSL.
   .clip-hex {
     clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
   }
+  /* Angular "forge" button shape: chamfered corners */
+  .clip-forge {
+    clip-path: polygon(
+      10px 0%, calc(100% - 10px) 0%, 100% 10px,
+      100% calc(100% - 10px), calc(100% - 10px) 100%,
+      10px 100%, 0% calc(100% - 10px), 0% 10px
+    );
+  }
 }
