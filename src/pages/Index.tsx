@@ -23,27 +23,30 @@ export default function Index() {
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      <section className="relative overflow-hidden bg-gradient-hero">
-        <div className="container grid md:grid-cols-2 gap-10 items-center py-16 md:py-24">
+      <section className="relative overflow-hidden bg-gradient-hero text-primary-foreground">
+        <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
+        <div className="absolute -top-20 -left-20 w-80 h-80 clip-hex bg-primary/20 blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 right-10 w-64 h-64 rotate-12 bg-accent/20 blur-3xl pointer-events-none" />
+        <div className="container relative grid md:grid-cols-2 gap-10 items-center py-16 md:py-24">
           <div className="space-y-6">
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-background/60 backdrop-blur text-sm font-medium border border-border">
-              <Sparkles className="w-4 h-4 text-primary" /> {t("hero.tag")}
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-background/10 backdrop-blur text-xs font-mono-tech uppercase tracking-widest border border-primary-foreground/20">
+              <Sparkles className="w-4 h-4 text-accent" /> {t("hero.tag")}
             </span>
             <h1 className="font-display text-5xl md:text-6xl font-bold leading-[1.05]">
               {t("hero.title")}
             </h1>
-            <p className="text-lg text-muted-foreground max-w-md">{t("hero.subtitle")}</p>
+            <p className="text-lg text-primary-foreground/80 max-w-md">{t("hero.subtitle")}</p>
             <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="bg-gradient-primary text-primary-foreground shadow-elegant hover:opacity-90">
+              <Button asChild size="lg" className="bg-primary text-primary-foreground shadow-elegant hover:opacity-90 rounded-none">
                 <Link to="/shop">{t("hero.cta")} <ArrowRight className="ml-1 w-4 h-4" /></Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-foreground/20">
+              <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground rounded-none">
                 <Link to="/mini-me">{t("hero.minime")}</Link>
               </Button>
             </div>
           </div>
           <div className="relative">
-            <img src={hero} alt="3D printed products" width={1600} height={1000} className="rounded-3xl shadow-elegant w-full h-auto" />
+            <img src={hero} alt="FORJEIRO 3D — geometric forge of 3D printed products" width={1600} height={1000} className="shadow-elegant w-full h-auto clip-hex" />
           </div>
         </div>
       </section>
@@ -60,8 +63,8 @@ export default function Index() {
         </div>
       </section>
 
-      <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground">
-        © {new Date().getFullYear()} Print3D Studio
+      <footer className="border-t border-border py-8 text-center text-sm text-muted-foreground font-mono-tech">
+        © {new Date().getFullYear()} FORJEIRO 3D
       </footer>
     </div>
   );
