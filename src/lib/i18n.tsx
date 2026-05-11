@@ -44,7 +44,7 @@ const dict: Dict = {
   "cart.discount": { pt: "Desconto", en: "Discount" },
 
   "minime.title": { pt: "Mini-Me 3D", en: "3D Mini-Me" },
-  "minime.subtitle": { pt: "Envie 3 a 5 fotos para gerar uma versão 3D de você.", en: "Upload 3–5 photos to generate a 3D version of yourself." },
+  "minime.subtitle": { pt: "Envie de 1 a 3 fotos para gerar uma versão 3D de você.", en: "Upload 1 to 3 photos to generate a 3D version of yourself." },
   "minime.upload": { pt: "Enviar fotos", en: "Upload photos" },
   "minime.generate": { pt: "Gerar prévia 3D", en: "Generate 3D preview" },
   "minime.preview": { pt: "Prévia", en: "Preview" },

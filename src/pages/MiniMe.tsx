@@ -14,8 +14,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, Sparkles, Truck, Wrench, Loader2, ShoppingBag } from "lucide-react";
 
-type Req = { id: string; status: string; preview_image_url: string | null; photo_paths: string[]; size_cm: number };
-
 export default function MiniMe() {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -41,14 +39,14 @@ export default function MiniMe() {
   }, [user]);
 
   function pick(e: React.ChangeEvent<HTMLInputElement>) {
-    const list = Array.from(e.target.files || []).slice(0, 5);
+    const list = Array.from(e.target.files || []).slice(0, 3);
     setFiles(list);
     setPreviews(list.map((f) => URL.createObjectURL(f)));
   }
 
   async function generate() {
     if (!user) { nav("/auth"); return; }
-    if (files.length < 3) { toast.error(t("minime.subtitle")); return; }
+    if (files.length <= 0) { toast.error(t("minime.subtitle")); return; }
     setBusy(true);
     try {
       // Create request
@@ -69,15 +67,43 @@ export default function MiniMe() {
 
       // Mark as processing & save paths
       await supabase.from("mini_me_requests").update({ photo_paths: paths, status: "processing" }).eq("id", created.id);
+      // const { data, error } = await supabase.functions.invoke("generate-preview", {
+      //   body: {
+      //     test: true
+      //   }
+      // });
+      // console.log("DATA:", data);
+      // console.log("ERROR:", error);
 
-      // Call edge function (will fail gracefully without API key) — meanwhile show first photo as preview
-      toast.info(t("minime.processing"));
-      const { data: fn, error: fnErr } = await supabase.functions.invoke("generate-minime", {
-        body: { requestId: created.id, photoPaths: paths },
-      });
+      // Call Hunyuan 3D API
+      const response = await fetch(
+        "https://ibwjccnivacwluppnfft.supabase.co/functions/v1/hyper-api",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlid2pjY25pdmFjd2x1cHBuZmZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwODY2OTAsImV4cCI6MjA5MzY2MjY5MH0.28Rirq3NBh9aiRMP3D-DzdrXvsPIY-HGFYe7Gm7i1KM"
+          },
+          body: JSON.stringify({
+            requestId: created.id,
+            photoPaths: paths
+          })
+        }
+      );
+
+      const fn2 = await response.json();
+      console.log(fn2.preview_image_url);
+
+      await supabase
+        .from("mini_me_requests")
+        .update({
+          preview_image_url: fn2.preview_image_url,
+          status: "preview_ready"
+        })
+        .eq("id", created.id);
 
       let preview = previews[0];
-      if (!fnErr && fn?.preview_image_url) preview = fn.preview_image_url;
+      if (fn2 && fn2.preview_image_url) preview = fn2.preview_image_url;
 
       await supabase.from("mini_me_requests").update({
         status: "preview_ready", preview_image_url: preview,
@@ -152,7 +178,7 @@ export default function MiniMe() {
               className="border-2 border-dashed border-border rounded-2xl p-8 text-center cursor-pointer hover:border-primary transition-smooth"
             >
               <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-sm">{files.length > 0 ? `${files.length} / 5` : t("minime.upload")}</p>
+              <p className="text-sm">{files.length > 0 ? `${files.length} / 3` : t("minime.upload")}</p>
               <input ref={fileRef} type="file" accept="image/*" multiple onChange={pick} className="hidden" />
             </div>
 
@@ -167,7 +193,7 @@ export default function MiniMe() {
               <Slider value={[size]} min={10} max={30} step={1} onValueChange={(v) => setSize(v[0])} className="mt-2" />
             </div>
 
-            <Button onClick={generate} disabled={busy || files.length < 3} className="w-full bg-gradient-primary text-primary-foreground">
+            <Button onClick={generate} disabled={busy || files.length < 0} className="w-full bg-gradient-primary text-primary-foreground">
               {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
               {t("minime.generate")}
             </Button>

@@ -35,24 +35,29 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        console.log("🔥 signup chamado");
         const { error } = await supabase.auth.signUp({
           email, password,
           options: { emailRedirectTo: window.location.origin, data: { full_name: name } },
         });
         if (error) throw error;
+        console.log("🔥 Throw Error chamado");
         toast.success(t("auth.signup") + " ✓");
       } else {
+        console.log("🔥 Throw Else chamado");
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        console.log("🔥 generate chamado");
       }
     } catch (err: any) {
+      console.log("error chamado");
       toast.error(err.message || "Error");
     } finally { setLoading(false); }
   }
 
   async function google() {
     const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (r.error) toast.error("Google sign-in failed");
+    if (r.error) toast.error("Falha ao fazer login com Google.");
   }
 
   return (
