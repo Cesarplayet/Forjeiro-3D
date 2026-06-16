@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { z } from "zod";
-import { lovable } from "@/integrations/lovable/index";
+// import { lovable } from "@/integrations/lovable/index";
 
 const schema = z.object({
   email: z.string().email(),
@@ -56,8 +56,8 @@ export default function AuthPage() {
   }
 
   async function google() {
-    const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    if (r.error) toast.error("Falha ao fazer login com Google.");
+    // const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
+    // if (r.error) toast.error("Falha ao fazer login com Google.");
   }
 
   return (
