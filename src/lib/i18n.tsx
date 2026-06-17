@@ -65,6 +65,9 @@ const dict: Dict = {
   "auth.or": { pt: "ou", en: "or" },
   "auth.haveAccount": { pt: "Já tem conta? Entrar", en: "Have an account? Sign in" },
   "auth.noAccount": { pt: "Não tem conta? Criar agora", en: "No account? Sign up" },
+  "auth.checkEmail": { pt: "Confira seu e-mail para confirmar a conta.", en: "Check your email to confirm your account." },
+  "auth.signinSuccess": { pt: "Login realizado com sucesso.", en: "Signed in successfully." },
+  "auth.googleError": { pt: "Falha ao entrar com Google.", en: "Failed to sign in with Google." },
 
   "orders.title": { pt: "Meus pedidos", en: "My orders" },
   "orders.empty": { pt: "Nenhum pedido ainda.", en: "No orders yet." },

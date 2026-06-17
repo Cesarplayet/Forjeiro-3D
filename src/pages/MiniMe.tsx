@@ -14,6 +14,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, Sparkles, Truck, Wrench, Loader2, ShoppingBag } from "lucide-react";
 
+type MiniMeRequest = {
+  id: string;
+  photo_paths: string[];
+  preview_image_url: string | null;
+  status: string;
+};
+
+const previewTaskKey = (requestId: string) => `mini-me-preview-task:${requestId}`;
+const loadingPreviewUrl = "/Forjeiro-Carregando.gif";
+const minMiniMeSize = 10;
+const maxPreviewSize = 22;
+const minPreviewPrice = 120;
+const maxPreviewPrice = 500;
+
+function calculateMiniMePrice(sizeCm: number) {
+  const normalizedSize = Math.min(Math.max(sizeCm, minMiniMeSize), maxPreviewSize);
+  const minVolume = minMiniMeSize ** 3;
+  const maxVolume = maxPreviewSize ** 3;
+  const currentVolume = normalizedSize ** 3;
+  const ratio = (currentVolume - minVolume) / (maxVolume - minVolume);
+
+  return Math.round(minPreviewPrice + ratio * (maxPreviewPrice - minPreviewPrice));
+}
+
 export default function MiniMe() {
   const { t } = useI18n();
   const { user } = useAuth();
@@ -23,32 +47,130 @@ export default function MiniMe() {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
-  const [req, setReq] = useState<Req | null>(null);
+  const [req, setReq] = useState<MiniMeRequest | null>(null);
+  const [previewTaskId, setPreviewTaskId] = useState<string | null>(null);
+  const [pollingPreview, setPollingPreview] = useState(false);
   const [size, setSize] = useState(15);
   const [cep, setCep] = useState("");
   const [shipping, setShipping] = useState<number | null>(null);
+  const [modelNotes, setModelNotes] = useState("");
   const [supportNotes, setSupportNotes] = useState("");
   const [showSupport, setShowSupport] = useState(false);
+  const previewReady = req?.status === "preview_ready" && Boolean(req.preview_image_url);
+  const waitingPreview = busy || pollingPreview || req?.status === "processing";
+  const previewActionLocked = busy || pollingPreview || waitingPreview;
+  const miniMePrice = previewReady ? calculateMiniMePrice(size) : 0;
 
   useEffect(() => {
     if (!user) return;
     supabase
       .from("mini_me_requests")
       .select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1)
-      .then(({ data }) => { if (data?.[0]) setReq(data[0] as any); });
+      .then(({ data }) => {
+        if (data?.[0]) {
+          const latest = data[0] as MiniMeRequest;
+          setReq(latest);
+          setPreviewTaskId(localStorage.getItem(previewTaskKey(latest.id)));
+        }
+      });
   }, [user]);
 
+  useEffect(() => {
+    if (!req || !previewTaskId || !waitingPreview || busy || pollingPreview) return;
+
+    const timeout = window.setTimeout(() => {
+      void fetchPreviewResult(req, previewTaskId);
+    }, 5000);
+
+    return () => window.clearTimeout(timeout);
+  }, [req, previewTaskId, waitingPreview, busy, pollingPreview]);
+
   function pick(e: React.ChangeEvent<HTMLInputElement>) {
-    const list = Array.from(e.target.files || []).slice(0, 3);
+    const list = Array.from(e.target.files || [])
+      .filter((file) => file.type === "image/jpeg" || file.type === "image/png" || /\.(jpe?g|png)$/i.test(file.name))
+      .slice(0, 3);
+    if ((e.target.files?.length || 0) > 0 && list.length === 0) {
+      toast.error("Use uma imagem JPG, JPEG ou PNG.");
+      return;
+    }
     setFiles(list);
     setPreviews(list.map((f) => URL.createObjectURL(f)));
+    setReq(null);
+    setPreviewTaskId(null);
+  }
+
+  function uploadName(file: File, index: number) {
+    const ext = file.type === "image/jpeg" || /\.jpe?g$/i.test(file.name) ? "jpg" : "png";
+    return `${Date.now()}-${index}.${ext}`;
+  }
+
+  async function refreshAuthSession() {
+    const { data, error } = await supabase.auth.refreshSession();
+    if (error || !data.session) {
+      throw new Error("Sua sessao expirou. Entre novamente para continuar.");
+    }
+  }
+
+  async function handleGenerateError(err: any) {
+    const message = err?.message || String(err);
+    const lower = message.toLowerCase();
+    if (lower.includes("jwt") && lower.includes("expired")) {
+      await supabase.auth.signOut();
+      toast.error("Sua sessao expirou. Entre novamente para continuar.");
+      nav("/auth");
+      return;
+    }
+    toast.error(message);
+  }
+
+  async function fetchPreviewResult(request: MiniMeRequest, taskId: string) {
+    setPollingPreview(true);
+    try {
+      await refreshAuthSession();
+      const { data: generated, error: fnError } = await supabase.functions.invoke("generate-preview", {
+        body: {
+          requestId: request.id,
+          photoPaths: request.photo_paths,
+          sizeCm: size,
+          notes: modelNotes,
+          providerTaskId: taskId,
+        },
+      });
+
+      if (fnError) {
+        const details = (fnError as any)?.context?.error ?? (fnError as any)?.context?.message;
+        throw new Error(details || fnError.message);
+      }
+      if (generated?.error) throw new Error(generated.error);
+      if (generated?.provider_task_id) {
+        localStorage.setItem(previewTaskKey(request.id), generated.provider_task_id);
+        setPreviewTaskId(generated.provider_task_id);
+      }
+      if (generated?.preview_image_url) {
+        localStorage.removeItem(previewTaskKey(request.id));
+        setPreviewTaskId(null);
+      }
+
+      const { data: updated } = await supabase.from("mini_me_requests").select("*").eq("id", request.id).single();
+      setReq({
+        ...(updated as MiniMeRequest),
+        preview_image_url: generated?.preview_image_url ?? updated?.preview_image_url ?? null,
+      });
+      if (!generated?.pending) toast.success("Preview gerada.");
+    } catch (err: any) {
+      await handleGenerateError(err);
+    } finally {
+      setPollingPreview(false);
+    }
   }
 
   async function generate() {
     if (!user) { nav("/auth"); return; }
+    if (waitingPreview || previewReady) return;
     if (files.length <= 0) { toast.error(t("minime.subtitle")); return; }
     setBusy(true);
     try {
+      await refreshAuthSession();
       // Create request
       const { data: created, error: e1 } = await supabase
         .from("mini_me_requests")
@@ -58,62 +180,58 @@ export default function MiniMe() {
 
       // Upload photos
       const paths: string[] = [];
-      for (const f of files) {
-        const path = `${user.id}/${created.id}/${Date.now()}-${f.name}`;
-        const { error } = await supabase.storage.from("mini-me-photos").upload(path, f);
+      for (const [index, f] of files.entries()) {
+        const path = `${user.id}/${created.id}/${uploadName(f, index)}`;
+        const { error } = await supabase.storage.from("mini-me-photos").upload(path, f, {
+          contentType: f.type,
+        });
         if (error) throw error;
         paths.push(path);
       }
 
-      // Mark as processing & save paths
-      await supabase.from("mini_me_requests").update({ photo_paths: paths, status: "processing" }).eq("id", created.id);
-      // const { data, error } = await supabase.functions.invoke("generate-preview", {
-      //   body: {
-      //     test: true
-      //   }
-      // });
-      // console.log("DATA:", data);
-      // console.log("ERROR:", error);
-
-      // Call Hunyuan 3D API
-      const response = await fetch(
-        "https://ibwjccnivacwluppnfft.supabase.co/functions/v1/hyper-api",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlid2pjY25pdmFjd2x1cHBuZmZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwODY2OTAsImV4cCI6MjA5MzY2MjY5MH0.28Rirq3NBh9aiRMP3D-DzdrXvsPIY-HGFYe7Gm7i1KM"
-          },
-          body: JSON.stringify({
-            requestId: created.id,
-            photoPaths: paths
-          })
-        }
-      );
-
-      const fn2 = await response.json();
-      console.log(fn2.preview_image_url);
-
       await supabase
         .from("mini_me_requests")
-        .update({
-          preview_image_url: fn2.preview_image_url,
-          status: "preview_ready"
-        })
+        .update({ photo_paths: paths, status: "processing" })
         .eq("id", created.id);
+      setReq({
+        ...(created as MiniMeRequest),
+        photo_paths: paths,
+        preview_image_url: null,
+        status: "processing",
+      });
 
-      let preview = previews[0];
-      if (fn2 && fn2.preview_image_url) preview = fn2.preview_image_url;
+      const { data: generated, error: fnError } = await supabase.functions.invoke("generate-preview", {
+        body: {
+          requestId: created.id,
+          photoPaths: paths,
+          sizeCm: size,
+          notes: modelNotes,
+        },
+      });
 
-      await supabase.from("mini_me_requests").update({
-        status: "preview_ready", preview_image_url: preview,
-      }).eq("id", created.id);
+      if (fnError) {
+        const details = (fnError as any)?.context?.error ?? (fnError as any)?.context?.message;
+        throw new Error(details || fnError.message);
+      }
+      if (generated?.error) throw new Error(generated.error);
+      if (generated?.provider_task_id) {
+        localStorage.setItem(previewTaskKey(created.id), generated.provider_task_id);
+        setPreviewTaskId(generated.provider_task_id);
+      }
+      if (generated?.preview_image_url) {
+        localStorage.removeItem(previewTaskKey(created.id));
+        setPreviewTaskId(null);
+      }
 
       const { data: updated } = await supabase.from("mini_me_requests").select("*").eq("id", created.id).single();
-      setReq(updated as any);
-      toast.success("✨");
+      setReq({
+        ...(updated as MiniMeRequest),
+        preview_image_url: generated?.preview_image_url ?? updated?.preview_image_url ?? null,
+      });
+      if (fileRef.current) fileRef.current.value = "";
+      toast.success(generated?.pending ? t("minime.processing") : "Preview gerada.");
     } catch (err: any) {
-      toast.error(err.message);
+      await handleGenerateError(err);
     } finally { setBusy(false); }
   }
 
@@ -136,12 +254,11 @@ export default function MiniMe() {
   }
 
   function addMiniMeToCart() {
-    if (!req) return;
-    const price = 199 + size * 8;
+    if (!req || !previewReady) return;
     add({
       id: `minime-${req.id}`,
       name: `Mini-Me ${size}cm`,
-      price, image_url: req.preview_image_url,
+      price: miniMePrice, image_url: req.preview_image_url,
       kind: "minime", meta: { requestId: req.id, size },
     });
     nav("/cart");
@@ -179,7 +296,14 @@ export default function MiniMe() {
             >
               <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
               <p className="text-sm">{files.length > 0 ? `${files.length} / 3` : t("minime.upload")}</p>
-              <input ref={fileRef} type="file" accept="image/*" multiple onChange={pick} className="hidden" />
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                multiple
+                onChange={pick}
+                className="hidden"
+              />
             </div>
 
             {previews.length > 0 && (
@@ -190,12 +314,23 @@ export default function MiniMe() {
 
             <div>
               <Label className="text-sm">{t("minime.size")}: <strong>{size} cm</strong></Label>
-              <Slider value={[size]} min={10} max={30} step={1} onValueChange={(v) => setSize(v[0])} className="mt-2" />
+              <Slider value={[size]} min={minMiniMeSize} max={maxPreviewSize} step={1} onValueChange={(v) => setSize(v[0])} className="mt-2" />
             </div>
 
-            <Button onClick={generate} disabled={busy || files.length < 0} className="w-full bg-gradient-primary text-primary-foreground">
-              {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
-              {t("minime.generate")}
+            <div>
+              <Label className="text-sm">{t("minime.notes")}</Label>
+              <Textarea
+                value={modelNotes}
+                onChange={(e) => setModelNotes(e.target.value)}
+                maxLength={500}
+                placeholder="Ex.: manter óculos, camiseta simples, cabelo curto, postura em pé."
+                className="mt-2"
+              />
+            </div>
+
+            <Button onClick={generate} disabled={previewActionLocked || previewReady || files.length === 0} className="w-full bg-gradient-primary text-primary-foreground">
+              {previewActionLocked ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+              {previewActionLocked ? "Carregando previa" : previewReady ? "Previa gerada" : t("minime.generate")}
             </Button>
           </Card>
 
@@ -204,6 +339,10 @@ export default function MiniMe() {
             <div className="aspect-square rounded-2xl bg-gradient-hero grid place-items-center overflow-hidden">
               {req?.preview_image_url ? (
                 <img src={req.preview_image_url} alt="preview" className="w-full h-full object-cover" />
+              ) : waitingPreview ? (
+                <div className="w-full h-full bg-background grid place-items-center p-6">
+                  <img src={loadingPreviewUrl} alt={t("minime.processing")} className="max-w-full max-h-full object-contain" />
+                </div>
               ) : (
                 <div className="text-center text-muted-foreground p-6">
                   <Sparkles className="w-10 h-10 mx-auto mb-2 opacity-50" />
@@ -227,8 +366,8 @@ export default function MiniMe() {
                 )}
 
                 <div className="flex gap-2">
-                  <Button onClick={addMiniMeToCart} className="flex-1 bg-primary text-primary-foreground">
-                    <ShoppingBag className="w-4 h-4 mr-2" /> R$ {(199 + size * 8).toFixed(2)}
+                  <Button onClick={addMiniMeToCart} disabled={!previewReady} className="flex-1 bg-primary text-primary-foreground">
+                    <ShoppingBag className="w-4 h-4 mr-2" /> R$ {miniMePrice.toFixed(2)}
                   </Button>
                   <Button variant="outline" onClick={() => setShowSupport((s) => !s)}>
                     <Wrench className="w-4 h-4 mr-1" /> {t("minime.support")}

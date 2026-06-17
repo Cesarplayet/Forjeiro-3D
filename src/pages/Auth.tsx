@@ -10,7 +10,6 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import { z } from "zod";
-// import { lovable } from "@/integrations/lovable/index";
 
 const schema = z.object({
   email: z.string().email(),
@@ -23,8 +22,11 @@ export default function AuthPage() {
   const { user } = useAuth();
   const nav = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   useEffect(() => { if (user) nav("/", { replace: true }); }, [user, nav]);
 
@@ -35,29 +37,50 @@ export default function AuthPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
-        console.log("🔥 signup chamado");
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email, password,
-          options: { emailRedirectTo: window.location.origin, data: { full_name: name } },
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth`,
+            data: { full_name: name },
+          },
         });
         if (error) throw error;
-        console.log("🔥 Throw Error chamado");
-        toast.success(t("auth.signup") + " ✓");
+
+        if (data.session) {
+          toast.success(t("auth.signinSuccess"));
+          nav("/", { replace: true });
+        } else {
+          toast.success(t("auth.checkEmail"));
+        }
       } else {
-        console.log("🔥 Throw Else chamado");
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        console.log("🔥 generate chamado");
+        toast.success(t("auth.signinSuccess"));
+        nav("/", { replace: true });
       }
     } catch (err: any) {
-      console.log("error chamado");
       toast.error(err.message || "Error");
     } finally { setLoading(false); }
   }
 
   async function google() {
-    // const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-    // if (r.error) toast.error("Falha ao fazer login com Google.");
+    setGoogleLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "select_account",
+          },
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      toast.error(err.message || t("auth.googleError"));
+      setGoogleLoading(false);
+    }
   }
 
   return (
@@ -69,7 +92,7 @@ export default function AuthPage() {
             {mode === "signin" ? t("auth.signin") : t("auth.signup")}
           </h1>
 
-          <Button variant="outline" className="w-full mb-4" onClick={google} type="button">
+          <Button variant="outline" className="w-full mb-4" onClick={google} type="button" disabled={googleLoading || loading}>
             {t("auth.google")}
           </Button>
           <div className="flex items-center gap-3 mb-4 text-xs text-muted-foreground">
@@ -88,7 +111,7 @@ export default function AuthPage() {
             <div><Label>{t("auth.password")}</Label>
               <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} maxLength={72} required />
             </div>
-            <Button type="submit" disabled={loading} className="w-full bg-gradient-primary text-primary-foreground">
+            <Button type="submit" disabled={loading || googleLoading} className="w-full bg-gradient-primary text-primary-foreground">
               {mode === "signin" ? t("auth.signin") : t("auth.signup")}
             </Button>
           </form>

@@ -12,7 +12,17 @@ dist
 dist-ssr
 *.local
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# .NET build outputs
+[Bb]in/
+[Oo]bj/
+
 # Editor directories and files
+.vs/
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,4 +32,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-*.env
